@@ -36,6 +36,7 @@ void loop()
   uint16_t lastTime=0;
   uint16_t crank=0;
   uint16_t power=0;
+  int resistor;
   
   if (central)
   {
@@ -67,12 +68,14 @@ void loop()
       cadenceData[4] = lastTime / 256;
       cadenceChar.writeValue(cadenceData,5);
 
+      resistor = analogRead(A0);
 
-      sprintf(printBuffer,"Set power to %d at time %d last time %d crank %d\n", power, millis(),lastTime,crank);
+
+      sprintf(printBuffer,"Set power to %d at time %d last time %d crank %d resistor %d\n", power, millis(),lastTime,crank,resistor);
       Serial.print(printBuffer);
 
       
-      delay(200);
+      delay(resistor);
 
     }
   }
