@@ -1,0 +1,27 @@
+Service IDs
+
+CSC Feature			org.bluetooth.characteristic.csc_feature			0x2A5C	GSS
+CSC Measurement			org.bluetooth.characteristic.csc_measurement			0x2A5B	GSS
+Current Time			org.bluetooth.characteristic.current_time			0x2A2B	GSS
+Cycling Power Control Point	org.bluetooth.characteristic.cycling_power_control_point	0x2A66	GSS
+Cycling Power Feature		org.bluetooth.characteristic.cycling_power_feature		0x2A65	GSS
+Cycling Power Measurement	org.bluetooth.characteristic.cycling_power_measurement		0x2A63	GSS
+Sensor Location			org.bluetooth.characteristic.sensor_location			0x2A5D	GSS
+SC Control Point		org.bluetooth.characteristic.sc_control_point			0x2A55	GSS
+
+
+
+Cadence meter sends 0x2A5B N, 0x2A5C R, 0x2A5D R and 0x2A55 W
+
+We send 0x2A63
+
+
+BLE spec bytes Little1 Endian byte order, and with LSB first in every byte
+
+
+
+
+Useful physics
+https://physics.stackexchange.com/questions/193501/method-of-calculating-eddy-currents-of-a-conductor-is-this-correct
+https://www.physicsforums.com/threads/calculating-the-magnitude-of-eddy-currents-retarding-force.822714/
+
