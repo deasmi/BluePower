@@ -9,6 +9,7 @@ const float crankLength = 0.175f;
 volatile uint16_t crank=0;
 volatile unsigned long lastEvent; // time in ms since boot of most recent revolution
 volatile unsigned long deltaTime; // tims in ms between previous rotation and lastEvent
+volatile bool ledState;
 
 BLEService powerService("1818");
 BLECharacteristic powerLevelChar("2A63", BLERead | BLENotify, 4, false);
@@ -16,11 +17,20 @@ BLECharacteristic cadenceChar("2A5B", BLERead | BLENotify, 5, false);
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
+  //while (!Serial);
 
   log("Logging %s","test");
 
   pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(500);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(500);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(500);
+  digitalWrite(LED_BUILTIN, LOW);
+  ledState=false;
+  
   if (!BLE.begin())
   {
     log("starting BLE failed!");
@@ -68,7 +78,9 @@ void isrPedal() {
       crank++;
       pedalState=newState;
       deltaTime = thisEvent - lastEvent;
-      lastEvent=thisEvent;     
+      lastEvent=thisEvent;
+      ledState = !ledState;
+      digitalWrite(LED_BUILTIN, ledState);
     } 
 
 }
@@ -121,7 +133,6 @@ void loop()
   if (central)
   {
     log("Connected to central: %s", central.address());
-    digitalWrite(LED_BUILTIN, HIGH);
 
     while (central.connected()) {
       //power = 100 + rand() % 25 ; // ???? I wonder what that equates to...
