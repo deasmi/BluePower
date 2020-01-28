@@ -34,13 +34,7 @@ void log(const char *format,...) {
   va_end(args); 
 }  
 
-
-
-
-
-
-
-void isrPedal() { 
+void pedalIH() { 
     bool newState;
     bool pedalState;
     unsigned long thisEvent;
@@ -150,7 +144,7 @@ void setup() {
   pinMode(downButton,INPUT);
 
   // Attach interupts
-  attachInterrupt(digitalPinToInterrupt(pedalSensorPin), isrPedal, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(pedalSensorPin), pedalIH, CHANGE);
 //  attachInterrupt(digitalPinToInterrupt(switchPin), isrPowerSwitch, CHANGE);
 
   attachInterrupt(digitalPinToInterrupt(downButton), upButtonIH, RISING);
