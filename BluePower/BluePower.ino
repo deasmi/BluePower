@@ -1,5 +1,6 @@
 #include <ArduinoBLE.h>
 #include <stdarg.h>
+#include "BluePower.h"
 #define BATTERYLEVEL 72
 const int pedalSensorPin = 2;     // the number of input for the cadence sensor
 const int upButton = 3;
