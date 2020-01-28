@@ -2,67 +2,40 @@
 #include <stdarg.h>
 #define BATTERYLEVEL 72
 const int pedalSensorPin = 2;     // the number of input for the cadence sensor
-const int switchPin = 3;     // the number of input for the power switch
-volatile int powerSetting;
+const int upButton = 3;
+const int downButton = 10;
 const float forceLevels[] = {1000,3000,800,900,14000,16000,12000,20000};
 const float crankLength = 0.175f;
+const long bounceDelay = 250;
+
+
+// These are global and used in interupt handlers, so must be volatile, ie. in RAM always
 volatile uint16_t crank=0;
 volatile unsigned long lastEvent; // time in ms since boot of most recent revolution
 volatile unsigned long deltaTime; // tims in ms between previous rotation and lastEvent
 volatile bool ledState;
+volatile int powerSetting;
 
 BLEService powerService("1818");
 BLECharacteristic powerLevelChar("2A63", BLERead | BLENotify, 4, false);
 BLECharacteristic cadenceChar("2A5B", BLERead | BLENotify, 5, false);
 
-void setup() {
-  Serial.begin(9600);
-  //while (!Serial);
 
-  log("Logging %s","test");
 
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(500);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  digitalWrite(LED_BUILTIN, LOW);
-  ledState=false;
+// https://en.wikibooks.org/wiki/C_Programming/stdarg.h
+void log(const char *format,...) {
+  char printBuffer[1024];
+  va_list args;
   
-  if (!BLE.begin())
-  {
-    log("starting BLE failed!");
-    while (1);
-  }
+  va_start(args,format);
+  vsprintf(printBuffer, format, args); 
+  Serial.println(printBuffer);
+  va_end(args); 
+}  
 
-  lastEvent=millis(); // Initialise lastEvent with sane value
 
-  // Set pins to input mode
-  pinMode(pedalSensorPin,INPUT); 
-  pinMode(switchPin,INPUT);
 
-  // Attach interupts
-  attachInterrupt(digitalPinToInterrupt(pedalSensorPin), isrPedal, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(switchPin), isrPowerSwitch, CHANGE);
 
-  // Power setting
-  if (digitalRead(pedalSensorPin)) {
-    powerSetting = 8;
-  } else {
-    powerSetting = 7;
-  }
-  
-  BLE.setDeviceName("BluePower");
-  BLE.setLocalName("BluePower");
-  BLE.setAdvertisedService(powerService);
-  powerService.addCharacteristic(powerLevelChar);
-  powerService.addCharacteristic(cadenceChar);
-  BLE.addService(powerService);
-  BLE.advertise();
-  log("Bluetooth device active, waiting for connections...");
-}
 
 
 
@@ -85,7 +58,7 @@ void isrPedal() {
 
 }
 
-void isrPowerSwitch() {
+/*void isrPowerSwitch() {
     bool buttonState;
 
     // Let it settle, only viable for low change
@@ -101,20 +74,99 @@ void isrPowerSwitch() {
       powerSetting=7;
     }
   }
+*/
+
+/* How to handle the Buttons 
+ * Need to handle bounce
+ * And a delay between presses
+ */
+void upButtonIH() {
+  static bool status;
+  static long lastEvent;
+  static bool state;
+  static bool oldState;
+  unsigned long now;
+
+  state = digitalRead(upButton);
+  now = millis();
 
 
-// https://en.wikibooks.org/wiki/C_Programming/stdarg.h
-void log(const char *format,...) {
-  char printBuffer[1024];
-  va_list args;
+  if ((now - lastEvent) > bounceDelay) {
+    lastEvent = now;
+    powerSetting++;
+    if (powerSetting>8) { powerSetting=8; }  
+    log("upBottonIH-%lu",now);
+    }
+}
+
+
+void downButtonIH() {
+  static bool status;
+  static long lastEvent;
+  static bool state;
+  static bool oldState;
+  unsigned long now;
+
+  state = digitalRead(downButton);
+  now = millis();
+
+  if ((now - lastEvent) > bounceDelay) {
+    lastEvent = now;
+      powerSetting--;
+      if (powerSetting<1) { powerSetting=1; }
+      log("downBottonIH-%lu",now);
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  //while (!Serial);
+
+  log("Logging %s","test");
+
+  // Flash twice to indicate we are running
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(500);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(500);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(500);
+  digitalWrite(LED_BUILTIN, LOW);
+  ledState=false;
   
-  va_start(args,format);
-  vsprintf(printBuffer, format, args); 
-  Serial.println(printBuffer);
-  va_end(args); 
-}  
+  if (!BLE.begin())
+  {
+    log("starting BLE failed!");
+    while (1);
+  }
+
+  lastEvent=millis(); // Initialise lastEvent with sane value
+
+  // Set pins to input mode
+  pinMode(pedalSensorPin,INPUT); 
+  pinMode(upButton,INPUT);
+  pinMode(downButton,INPUT);
+
+  // Attach interupts
+  attachInterrupt(digitalPinToInterrupt(pedalSensorPin), isrPedal, CHANGE);
+//  attachInterrupt(digitalPinToInterrupt(switchPin), isrPowerSwitch, CHANGE);
+
+  attachInterrupt(digitalPinToInterrupt(downButton), upButtonIH, RISING);
+  attachInterrupt(digitalPinToInterrupt(upButton), downButtonIH, RISING);
 
 
+  powerSetting=5; // Default to a mid setting
+
+  BLE.setDeviceName("BluePower");
+  BLE.setLocalName("BluePower");
+  BLE.setAdvertisedService(powerService);
+  powerService.addCharacteristic(powerLevelChar);
+  powerService.addCharacteristic(cadenceChar);
+  BLE.addService(powerService);
+  BLE.advertise();
+  log("Bluetooth device active, waiting for connections...");
+}
 
 void loop()
 {  
@@ -165,6 +217,7 @@ void loop()
       } else {
         // No changes
       }
+    //log("upButton %d downButton %d at %lu",digitalRead(upButton),digitalRead(downButton),millis());
     delay(100);
     }
   }
