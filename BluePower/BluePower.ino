@@ -1,6 +1,12 @@
 #include <ArduinoBLE.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_PCD8544.h>
 #include "BluePower.h"
+
 #define BATTERYLEVEL 72
 const int pedalSensorPin = 2;     // the number of input for the cadence sensor
 const int upButton = 3;
@@ -8,7 +14,7 @@ const int downButton = 10;
 const float forceLevels[] = {1000,3000,800,900,14000,16000,12000,20000};
 const float crankLength = 0.175f;
 const long bounceDelay = 250;
-
+const char welcomeMessage[] = {'B','l','u','e','P','o','w','e','r',0};
 
 // These are global and used in interupt handlers, so must be volatile, ie. in RAM always
 volatile uint16_t crank=0;
@@ -22,6 +28,7 @@ BLECharacteristic powerLevelChar("2A63", BLERead | BLENotify, 4, false);
 BLECharacteristic cadenceChar("2A5B", BLERead | BLENotify, 5, false);
 
 
+Adafruit_PCD8544 display = Adafruit_PCD8544(A0, A1, A2);
 
 // https://en.wikibooks.org/wiki/C_Programming/stdarg.h
 void log(const char *format,...) {
@@ -113,24 +120,45 @@ void downButtonIH() {
   }
 }
 
+void initDisplay() {
+	// Setup the screen
+	display.begin();
+	display.setContrast(50);
+	display.setRotation(2);
+  display.clearDisplay();   // clears the screen and buffer
+
+	display.setTextSize(1);
+	display.setTextColor(BLACK);
+	display.setCursor(2,2);
+
+	for (int i=0; i<strlen(welcomeMessage); i++)
+		{
+			display.setCursor(i*8,0);
+			display.write(welcomeMessage[i]);
+		}
+	display.display();
+}
+
+void updateDisplay()
+{
+	log("updateDisplay()");
+	display.clearDisplay();
+
+	display.setTextSize(4);
+	display.setTextColor(BLACK);
+	display.setCursor(2,2);
+	display.write(48+powerSetting); // ASCII 0 is 48
+	display.display();
+}
+
 void setup() {
   Serial.begin(9600);
   //while (!Serial);
 
-  log("Logging %s","test");
+	initDisplay();
+	delay(1000);
 
-  // Flash twice to indicate we are running
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(500);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  digitalWrite(LED_BUILTIN, LOW);
-  ledState=false;
-  
-  if (!BLE.begin())
+	if (!BLE.begin())
   {
     log("starting BLE failed!");
     while (1);
@@ -175,7 +203,8 @@ void loop()
   float rpm;
   float torque;
  
-  
+  updateDisplay();
+
   central = BLE.central();
   if (central)
   {
@@ -212,8 +241,8 @@ void loop()
       } else {
         // No changes
       }
-    //log("upButton %d downButton %d at %lu",digitalRead(upButton),digitalRead(downButton),millis());
-    delay(100);
+			updateDisplay();
+			delay(100);
     }
   }
 
