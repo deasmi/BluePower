@@ -15,6 +15,9 @@ const float forceLevels[] = {1000,3000,800,900,14000,16000,12000,20000};
 const float crankLength = 0.175f;
 const long bounceDelay = 250;
 const char welcomeMessage[] = {'B','l','u','e','P','o','w','e','r',0};
+const int dcPIN=A0;
+const int csPIN=A1;
+const int rstPIN=A2;
 
 // These are global and used in interupt handlers, so must be volatile, ie. in RAM always
 volatile uint16_t crank=0;
@@ -22,13 +25,13 @@ volatile unsigned long lastEvent; // time in ms since boot of most recent revolu
 volatile unsigned long deltaTime; // tims in ms between previous rotation and lastEvent
 volatile bool ledState;
 volatile int powerSetting;
+volatile long currentPower;
 
 BLEService powerService("1818");
 BLECharacteristic powerLevelChar("2A63", BLERead | BLENotify, 4, false);
 BLECharacteristic cadenceChar("2A5B", BLERead | BLENotify, 5, false);
 
-
-Adafruit_PCD8544 display = Adafruit_PCD8544(A0, A1, A2);
+Adafruit_PCD8544 display = Adafruit_PCD8544(dcPIN, csPIN, rstPIN);
 
 // https://en.wikibooks.org/wiki/C_Programming/stdarg.h
 void log(const char *format,...) {
