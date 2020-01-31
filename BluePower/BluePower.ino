@@ -44,6 +44,9 @@ void log(const char *format,...) {
   va_end(args); 
 }  
 
+/***********************************
+ * Input interupt handlers         *
+ ***********************************/
 void pedalIH() { 
     bool newState;
     bool pedalState;
@@ -63,28 +66,6 @@ void pedalIH() {
 
 }
 
-/*void isrPowerSwitch() {
-    bool buttonState;
-
-    // Let it settle, only viable for low change
-    delay(25); 
-    
-    buttonState = digitalRead(switchPin);
-  if (
-  buttonState ) {
-      log("Power 8");
-      powerSetting=8;
-    } else { 
-      log("Power 7");
-      powerSetting=7;
-    }
-  }
-*/
-
-/* How to handle the Buttons 
- * Need to handle bounce
- * And a delay between presses
- */
 void upButtonIH() {
   static bool status;
   static long lastEvent;
@@ -123,6 +104,10 @@ void downButtonIH() {
   }
 }
 
+
+/***********************************
+ * Display functions               *
+ ***********************************/
 void initDisplay() {
 	// Setup the screen
 	display.begin();
@@ -144,15 +129,39 @@ void initDisplay() {
 
 void updateDisplay()
 {
-	log("updateDisplay()");
+	char buf[10]; // Tiny buffer for our strings
 	display.clearDisplay();
 
+	// Draw frame
+	display.drawRect(0,0,84,48,BLACK);
+	
+	// The power display
 	display.setTextSize(4);
 	display.setTextColor(BLACK);
 	display.setCursor(2,2);
 	display.write(48+powerSetting); // ASCII 0 is 48
-	display.display();
+
+	display.setTextSize(1);
+	display.setCursor(2,36);
+	display.print("Tension");
+
+	log("Current power %d",currentPower);
+	display.setCursor(52,2);
+	display.print("Power");
+	sprintf(buf,"%lu",currentPower);
+	display.setCursor(82-(5*strlen(buf)),10);
+	display.print(buf);
+
+	
+	display.setCursor(62,26);
+	display.print("RPM");
+
+
+	display.display();	
 }
+/***********************************
+ * Setup and loop below here       *
+ ***********************************/
 
 void setup() {
   Serial.begin(9600);
