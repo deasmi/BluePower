@@ -39,15 +39,19 @@ BLECharacteristic cadenceChar("2A5B", BLERead | BLENotify, 5, false);
 
 Adafruit_PCD8544 display = Adafruit_PCD8544(dcPIN, csPIN, rstPIN);
 
+
+/* Utility functions */
 // https://en.wikibooks.org/wiki/C_Programming/stdarg.h
 void log(const char *format,...) {
   char printBuffer[1024];
   va_list args;
-  
+
+	#ifdef DEBUG
   va_start(args,format);
   vsprintf(printBuffer, format, args); 
   Serial.println(printBuffer);
-  va_end(args); 
+  va_end(args);
+	#endif
 }  
 
 /***********************************
