@@ -7,17 +7,22 @@
 #include <Adafruit_PCD8544.h>
 #include "BluePower.h"
 
+#undef DEBUG
 #define BATTERYLEVEL 72
+
 const int pedalSensorPin = 2;     // the number of input for the cadence sensor
 const int upButton = 3;
 const int downButton = 10;
 const float forceLevels[] = {1000,3000,800,900,14000,16000,12000,20000};
 const float crankLength = 0.175f;
 const long bounceDelay = 250;
-const char welcomeMessage[] = {'B','l','u','e','P','o','w','e','r',0};
+const char welcomeMessage[] = "BluePower\nStarting up..";
 const int dcPIN=A0;
 const int csPIN=A1;
 const int rstPIN=A2;
+
+const uint32_t updateRate=500; // How often to update power, rpm and screen
+const uint32_t pairingDelay=5000; // How long to wait before pairing attempts
 
 // These are global and used in interupt handlers, so must be volatile, ie. in RAM always
 volatile uint16_t crank=0;
@@ -119,12 +124,9 @@ void initDisplay() {
 	display.setTextSize(1);
 	display.setTextColor(BLACK);
 	display.setCursor(2,2);
+	display.print(welcomeMessage);
 
-	for (int i=0; i<strlen(welcomeMessage); i++)
-		{
-			display.setCursor(i*8,0);
-			display.write(welcomeMessage[i]);
-		}
+	statusDot=WHITE;
 	display.display();
 }
 
