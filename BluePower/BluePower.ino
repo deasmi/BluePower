@@ -32,6 +32,7 @@ volatile bool ledState;
 volatile int powerSetting;
 volatile long currentPower;
 volatile long currentRPM;
+volatile int statusDot;
 
 BLEService powerService("1818");
 BLECharacteristic powerLevelChar("2A63", BLERead | BLENotify, 4, false);
@@ -115,6 +116,36 @@ void downButtonIH() {
 }
 
 
+void updateValues() {
+  unsigned long thisEvent;
+  int resistor;
+  static int old_crank=0;
+	uint16_t power;
+  float rpm;
+  float torque;
+ 
+	// Do our maths
+	if (old_crank != crank) { // There has been a revolution -
+		old_crank=crank;
+		
+		// Calc rpm
+		rpm = (60000 / deltaTime); // one minute in ms divided by time between last two events
+		currentRPM=(long)rpm;
+		
+		// Calculate Power
+		// Torque
+		torque = (forceLevels[powerSetting-1] / 1000) * 9.81 * crankLength; 
+		// Power
+		power = (int) ( torque * PI * ( rpm/30 ));
+		currentPower = power;
+	}
+	
+	if (abs(millis() - lastEvent) > 5000) {
+		currentPower=0;
+		currentRPM=0;
+	}
+}
+
 /***********************************
  * Display functions               *
  ***********************************/
@@ -153,7 +184,6 @@ void updateDisplay()
 	display.setCursor(2,36);
 	display.print("Tension");
 
-	log("Current power %d",currentPower);
 	display.setCursor(52,2);
 	display.print("Power");
 	len = sprintf(buf,"%lu",currentPower);
@@ -313,49 +343,21 @@ void loop()
   BLEDevice central;
   char powerData[4];
   char cadenceData[5];
-  unsigned long thisEvent;
-  uint16_t power=0;
-  int resistor;
-  int old_crank;
-  float rpm;
-  float torque;
- 
-
+	log("Main loop");
 	// We want to run in central BLE mode
   central = BLE.central();
 
-	// Do out maths
-	if (old_crank != crank) { // There has been a revolution -
-		old_crank=crank;
-		
-		// Calc rpm
-		rpm = (60000 / deltaTime); // one minute in ms divided by time between last two events
-		currentRPM=(long)rpm;
-		
-		// Calculate Power
-		// Torque
-		torque = (forceLevels[powerSetting-1] / 1000) * 9.81 * crankLength; 
-		// Power
-		power = (int) ( torque * PI * ( rpm/30 ));
-		currentPower = power;
-	}
-
-	if (abs(millis() - lastEvent) > 5000) {
-		currentPower=0;
-		currentRPM=0;
-	}
-	
 	// If we have a connection
 	if (central)
   {
-    log("Connected to central: %s", central.address());
+    log("Connected to central: %s", central.address().c_str());
     while (central.connected()) {
 			
       // Flatten the power into the structure
       powerData[0]=0; // NO FLAGS
       powerData[1]=0; // NO FLAGS
-      powerData[2]=power % 256; // LSB
-      powerData[3]=power / 256; // MSB
+      powerData[2]=currentPower % 256; // LSB
+      powerData[3]=currentPower / 256; // MSB
       powerLevelChar.writeValue(powerData,4);
  
 			// Flatter the crank time to structure
@@ -365,11 +367,10 @@ void loop()
       cadenceData[3] = (lastEvent & 0xffff) % 0xff;
       cadenceData[4] = (lastEvent & 0xffff) / 0xff;
       cadenceChar.writeValue(cadenceData,5);
+			delay(250); // Inner delay if we are sending to a BLE device
 		}
+	} else {
+		log("Disconnected");
 	}
-  
-	log("rpm %f torque %f power %d lastTime %d crank %d", rpm, torque, power, lastEvent, crank);      
-	// Put up initial view of the world
-  updateDisplay();
-	delay(250);
+ 	delay(pairingDelay); // Outer delay between trying to pair with BLE device
 }
