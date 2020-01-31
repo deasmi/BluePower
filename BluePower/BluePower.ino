@@ -26,6 +26,7 @@ volatile unsigned long deltaTime; // tims in ms between previous rotation and la
 volatile bool ledState;
 volatile int powerSetting;
 volatile long currentPower;
+volatile long currentRPM;
 
 BLEService powerService("1818");
 BLECharacteristic powerLevelChar("2A63", BLERead | BLENotify, 4, false);
@@ -219,47 +220,56 @@ void loop()
   float rpm;
   float torque;
  
-  updateDisplay();
 
+	// We want to run in central BLE mode
   central = BLE.central();
-  if (central)
+
+	// Do out maths
+	if (old_crank != crank) { // There has been a revolution -
+		old_crank=crank;
+		
+		// Calc rpm
+		rpm = (60000 / deltaTime); // one minute in ms divided by time between last two events
+		currentRPM=(long)rpm;
+		
+		// Calculate Power
+		// Torque
+		torque = (forceLevels[powerSetting-1] / 1000) * 9.81 * crankLength; 
+		// Power
+		power = (int) ( torque * PI * ( rpm/30 ));
+		currentPower = power;
+	}
+
+	if (abs(millis() - lastEvent) > 5000) {
+		currentPower=0;
+		currentRPM=0;
+	}
+	
+	// If we have a connection
+	if (central)
   {
     log("Connected to central: %s", central.address());
-
     while (central.connected()) {
-      //power = 100 + rand() % 25 ; // ???? I wonder what that equates to...
-
-      if (old_crank != crank) { // There has been a revolution -
-      old_crank=crank;
-      
-      
-      // Calc rpm
-      rpm = (60000 / deltaTime); // one minute in ms divided by time between last two events
-      // Calculate Power
-      // Torque
-      torque = (forceLevels[powerSetting-1] / 1000) * 9.81 * crankLength; 
-      // Power
-      power = (int) ( torque * PI * ( rpm/30 ));
-      
+			
+      // Flatten the power into the structure
       powerData[0]=0; // NO FLAGS
       powerData[1]=0; // NO FLAGS
       powerData[2]=power % 256; // LSB
       powerData[3]=power / 256; // MSB
       powerLevelChar.writeValue(powerData,4);
  
+			// Flatter the crank time to structure
       cadenceData[0] = 0b10; // Crank only
       cadenceData[1] = crank & 0xff;
       cadenceData[2] = (crank >> 8) & 0xff;
       cadenceData[3] = (lastEvent & 0xffff) % 0xff;
       cadenceData[4] = (lastEvent & 0xffff) / 0xff;
       cadenceChar.writeValue(cadenceData,5);
-      log("rpm %f torque %f power %d lastTime %d crank %d", rpm, torque, power, lastEvent, crank);      
-      } else {
-        // No changes
-      }
-			updateDisplay();
-			delay(100);
-    }
-  }
-
+		}
+	}
+  
+	log("rpm %f torque %f power %d lastTime %d crank %d", rpm, torque, power, lastEvent, crank);      
+	// Put up initial view of the world
+  updateDisplay();
+	delay(250);
 }
