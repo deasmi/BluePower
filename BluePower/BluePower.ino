@@ -188,14 +188,15 @@ void setup() {
 
   // Attach interupts
   attachInterrupt(digitalPinToInterrupt(pedalSensorPin), pedalIH, CHANGE);
-//  attachInterrupt(digitalPinToInterrupt(switchPin), isrPowerSwitch, CHANGE);
-
   attachInterrupt(digitalPinToInterrupt(downButton), upButtonIH, RISING);
   attachInterrupt(digitalPinToInterrupt(upButton), downButtonIH, RISING);
 
-
+	// Setup key variables
   powerSetting=5; // Default to a mid setting
+	currentPower=0; // Assume static
+	currentRPM=0;
 
+	// Setup Bluetooth
   BLE.setDeviceName("BluePower");
   BLE.setLocalName("BluePower");
   BLE.setAdvertisedService(powerService);
