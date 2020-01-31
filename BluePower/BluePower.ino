@@ -129,13 +129,14 @@ void initDisplay() {
 
 void updateDisplay()
 {
-	char buf[10]; // Tiny buffer for our strings
+	char buf[20]; // Tiny buffer for our strings
+	int len;
 	display.clearDisplay();
 
 	// Draw frame
 	display.drawRect(0,0,84,48,BLACK);
 	
-	// The power display
+	// The main resistance display
 	display.setTextSize(4);
 	display.setTextColor(BLACK);
 	display.setCursor(2,2);
@@ -148,15 +149,17 @@ void updateDisplay()
 	log("Current power %d",currentPower);
 	display.setCursor(52,2);
 	display.print("Power");
-	sprintf(buf,"%lu",currentPower);
-	display.setCursor(82-(5*strlen(buf)),10);
+	len = sprintf(buf,"%lu",currentPower);
+	display.setCursor(82-(6*len),10);
 	display.print(buf);
 
 	
 	display.setCursor(62,26);
 	display.print("RPM");
-
-
+	len=sprintf(buf,"%lu",currentRPM);
+	display.setCursor(82-(6*len),34);
+	display.print(buf);
+	
 	display.display();	
 }
 /***********************************
@@ -167,8 +170,8 @@ void setup() {
   Serial.begin(9600);
   //while (!Serial);
 
-	initDisplay();
-	delay(1000);
+	initDisplay(); // Setup and show logo
+	delay(1000); // Wait 1s before main display
 
 	if (!BLE.begin())
   {
