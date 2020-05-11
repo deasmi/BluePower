@@ -11,15 +11,15 @@
 #define BATTERYLEVEL 72
 
 const int pedalSensorPin = 2;     // the number of input for the cadence sensor
-const int upButton = 3;
-const int downButton = 10;
+const int upButton = 8;
+const int downButton = 2;
 const float forceLevels[] = {1000,3000,800,900,14000,16000,12000,20000};
 const float crankLength = 0.175f;
 const long bounceDelay = 250;
 const char welcomeMessage[] = "BluePower\nStarting up..";
-const int dcPIN=A0;
-const int csPIN=A1;
-const int rstPIN=A2;
+const int dcPIN=A4;
+const int csPIN=A5;
+const int rstPIN=A6;
 
 const uint32_t updateRate=500; // How often to update power, rpm and screen
 const uint32_t pairingDelay=5000; // How long to wait before pairing attempts
