@@ -217,8 +217,8 @@ void setupInterupts() {
 
   // Attach interupts
   attachInterrupt(digitalPinToInterrupt(pedalSensorPin), pedalIH, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(downButton), upButtonIH, RISING);
-  attachInterrupt(digitalPinToInterrupt(upButton), downButtonIH, RISING);
+  attachInterrupt(digitalPinToInterrupt(upButton), upButtonIH, RISING);
+  attachInterrupt(digitalPinToInterrupt(downButton), downButtonIH, RISING);
 
 
 	// 0.25s timer for data and screen updates
