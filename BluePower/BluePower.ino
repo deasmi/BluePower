@@ -10,16 +10,16 @@
 #undef DEBUG
 #define BATTERYLEVEL 72
 
-const int pedalSensorPin = 2;     // the number of input for the cadence sensor
-const int upButton = 8;
+const int pedalSensorPin = 3;     // the number of input for the cadence sensor
+const int upButton = 9;
 const int downButton = 2;
 const float forceLevels[] = {1000,3000,800,900,14000,16000,12000,20000};
 const float crankLength = 0.175f;
 const long bounceDelay = 250;
 const char welcomeMessage[] = "BluePower\nStarting up..";
-const int dcPIN=A4;
-const int csPIN=A5;
-const int rstPIN=A6;
+const int dcPIN=A5;
+const int csPIN=A6;
+const int rstPIN=A7;
 
 const uint32_t updateRate=500; // How often to update power, rpm and screen
 const uint32_t pairingDelay=5000; // How long to wait before pairing attempts
@@ -65,6 +65,8 @@ void pedalIH() {
 
     thisEvent = millis();
     newState = digitalRead(pedalSensorPin);
+
+    log("pedalIH-%lu",thisEvent);
 
     if ((thisEvent - lastEvent > 100) && newState != pedalState) { // 100ms min for a pedal rotation, seems fair
       crank++;
@@ -153,7 +155,7 @@ void initDisplay() {
 	// Setup the screen
 	display.begin();
 	display.setContrast(50);
-	display.setRotation(2);
+	display.setRotation(0);
   display.clearDisplay();   // clears the screen and buffer
 
 	display.setTextSize(1);
