@@ -13,7 +13,7 @@
 const int pedalSensorPin = 3;     // the number of input for the cadence sensor
 const int upButton = 9;
 const int downButton = 2;
-const float forceLevels[] = {1000,3000,800,900,14000,16000,12000,20000};
+const float forceLevels[] = {500,1000,2000,4000,8000,10000,12000,20000};
 const float crankLength = 0.175f;
 const long bounceDelay = 250;
 const char welcomeMessage[] = "BluePower\nStarting up..";
